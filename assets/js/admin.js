@@ -30,7 +30,22 @@ const $=id=>document.getElementById(id); const read=(key,fallback=[])=>{try{retu
 function seed(force=false){ if(!force && localStorage.getItem(keys.seeded)) return; write(keys.craftVideos,demo.craftVideos); write(keys.moneyVideos,demo.moneyVideos); write(keys.jobs,demo.jobs); if(force||!localStorage.getItem(keys.craftUsers)) write(keys.craftUsers,[]); if(force||!localStorage.getItem(keys.moneyUsers)) write(keys.moneyUsers,[]); if(force||!localStorage.getItem(keys.craftRequests)) write(keys.craftRequests,[]); if(force||!localStorage.getItem(keys.moneyRequests)) write(keys.moneyRequests,[]); if(force||!localStorage.getItem(keys.contacts)) write(keys.contacts,[]); if(force) localStorage.removeItem(keys.adminSession); localStorage.setItem(keys.seeded,'yes'); }
 function setMsg(id,text,type='ok'){const el=$(id); if(el){el.textContent=text; el.className=`message ${type}`;}}
 function statusLabel(st){return st==='approved'?'Approved':st==='rejected'?'Rejected':'Pending'} function statusClass(st){return st==='approved'?'approved':st==='rejected'?'rejected':'pending'}
-function nav(){const b=$('menuToggle'),m=$('navMenu'); if(b&&m)b.onclick=()=>{b.classList.toggle('open');m.classList.toggle('show');};}
+function nav(){
+  const b=$('menuToggle'),m=$('navMenu'); if(!b||!m) return;
+  const close=()=>{b.classList.remove('open');m.classList.remove('show');};
+  b.onclick=e=>{e.stopPropagation();b.classList.toggle('open');m.classList.toggle('show');};
+  m.querySelectorAll('a').forEach(a=>a.onclick=close);
+  document.addEventListener('click',e=>{if(m.classList.contains('show')&&!m.contains(e.target)&&!b.contains(e.target))close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')close();});
+}
+function mobileQuickbar(){
+  if(document.querySelector('.mobile-quickbar')) return;
+  const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  const items=[['index.html','⌂','Home','home'],['earn-craft.html','🎬','Craft','craft'],['earn-money.html','💰','Money','money'],['admin.html','⚙','Admin','admin']];
+  const bar=document.createElement('nav'); bar.className='mobile-quickbar'; bar.setAttribute('aria-label','Mobile quick navigation');
+  bar.innerHTML=items.map(([href,icon,label,cls])=>`<a class="${cls} ${page===href?'active':''}" href="${href}"><span>${icon}</span>${label}</a>`).join('');
+  document.body.appendChild(bar);
+}
 function login(){ const form=$('adminLoginForm'); if(form) form.onsubmit=e=>{e.preventDefault(); const email=$('adminEmail').value.trim().toLowerCase(), code=$('adminCode').value.trim(); if(email==='admin@earncraft.lk'&&code==='1234'){localStorage.setItem(keys.adminSession,'yes'); show();} else setMsg('adminLoginMsg','Admin email හෝ code නිවැරදි නැත.','error');}; const out=$('adminLogout'); if(out) out.onclick=()=>{localStorage.removeItem(keys.adminSession);show();}; }
 function show(){ const ok=localStorage.getItem(keys.adminSession)==='yes'; if($('adminLoginCard')) $('adminLoginCard').style.display=ok?'none':'block'; if($('adminPanel')) $('adminPanel').classList.toggle('show',ok); if(ok) renderAll(); }
 function tabs(){ document.querySelectorAll('[data-admin-tab]').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('[data-admin-tab]').forEach(b=>b.classList.remove('active'));btn.classList.add('active');document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active')); const target=$(btn.dataset.adminTab); if(target) target.classList.add('active');}); }
@@ -62,5 +77,5 @@ function forms(){
 }
 function contacts(){ const box=$('adminContacts'); if(!box) return; const list=read(keys.contacts).slice().reverse(); box.innerHTML=list.length?list.map(c=>`<div class="list-item"><div><h4>${esc(c.subject)}</h4><p>${esc(c.name)} • ${esc(c.email)}</p><p>${esc(c.message)}</p><p>${esc(c.date)}</p></div></div>`).join(''):'<div class="empty">No messages.</div>'; }
 function renderAll(){stats();videos();requests();contacts();}
-function init(){seed();nav();login();tabs();forms();show();}
+function init(){seed();nav();mobileQuickbar();login();tabs();forms();show();}
 document.addEventListener('DOMContentLoaded',init);

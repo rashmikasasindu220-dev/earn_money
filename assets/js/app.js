@@ -48,7 +48,27 @@ function currentUser(type){ const email = localStorage.getItem(type === 'craft' 
 function statusLabel(st){ return st === 'approved' ? 'Approved' : st === 'rejected' ? 'Rejected' : 'Pending'; }
 function statusClass(st){ return st === 'approved' ? 'approved' : st === 'rejected' ? 'rejected' : 'pending'; }
 function setMsg(id, text, type='ok'){ const el=$(id); if(el){ el.textContent=text; el.className=`message ${type}`; } }
-function nav(){ const b=$('menuToggle'), m=$('navMenu'); if(!b||!m) return; b.addEventListener('click',()=>{b.classList.toggle('open');m.classList.toggle('show');}); }
+function nav(){
+  const b=$('menuToggle'), m=$('navMenu'); if(!b||!m) return;
+  const close=()=>{b.classList.remove('open');m.classList.remove('show');};
+  b.addEventListener('click',e=>{e.stopPropagation();b.classList.toggle('open');m.classList.toggle('show');});
+  m.querySelectorAll('a').forEach(a=>a.addEventListener('click',close));
+  document.addEventListener('click',e=>{if(m.classList.contains('show') && !m.contains(e.target) && !b.contains(e.target)) close();});
+  document.addEventListener('keydown',e=>{if(e.key==='Escape') close();});
+}
+function mobileQuickbar(){
+  if(document.querySelector('.mobile-quickbar')) return;
+  const page=(location.pathname.split('/').pop()||'index.html').toLowerCase();
+  const items=[
+    ['index.html','⌂','Home','home'],
+    ['earn-craft.html','🎬','Craft','craft'],
+    ['earn-money.html','💰','Money','money'],
+    ['admin.html','⚙','Admin','admin']
+  ];
+  const bar=document.createElement('nav'); bar.className='mobile-quickbar'; bar.setAttribute('aria-label','Mobile quick navigation');
+  bar.innerHTML=items.map(([href,icon,label,cls])=>`<a class="${cls} ${page===href?'active':''}" href="${href}"><span>${icon}</span>${label}</a>`).join('');
+  document.body.appendChild(bar);
+}
 function homeStats(){
   if($('statCraftVideos')) $('statCraftVideos').textContent = read(keys.craftVideos).length + '+';
   if($('statMoneyVideos')) $('statMoneyVideos').textContent = read(keys.moneyVideos).length + '+';
@@ -103,5 +123,5 @@ function chat(){
   open.onclick=()=>panel.classList.add('show'); if(close) close.onclick=()=>panel.classList.remove('show'); if(!form) return;
   form.addEventListener('submit',e=>{e.preventDefault(); const q=input.value.trim(); if(!q) return; body.insertAdjacentHTML('beforeend',`<div class="user-bubble">${esc(q)}</div>`); input.value=''; const low=q.toLowerCase(); let a='මෙය demo AI helper එකකි. Earn Craft video request, Earn Money lifetime access, admin approval සහ WhatsApp confirmation ගැන මට පැහැදිලි කර දිය හැක.'; if(low.includes('money')||q.includes('කුඩා')||q.includes('ජොබ්')) a='Earn Money login එක වෙනමයි. Lifetime access admin approve වුණාම videos සහ micro jobs unlock වේ. ආදායම guarantee නොවේ.'; if(low.includes('craft')||q.includes('වීඩියෝ')) a='Earn Craft තුළ videos එකින් එක request කළ හැක. WhatsApp confirmation පසු admin approve කළ විට status එක Approved වේ.'; if(low.includes('login')||q.includes('පිවිස')) a='Earn Craft සහ Earn Money සඳහා වෙන වෙනම login pages ඇත. එක account එකක් දෙකටම සම්බන්ධ නොවේ.'; if(low.includes('admin')||q.includes('පාලක')) a='Admin panel එකෙන් Earn Craft video requests සහ Earn Money lifetime requests වෙනම approve/reject කළ හැක.'; body.insertAdjacentHTML('beforeend',`<div class="bot-bubble">${esc(a)}</div>`); body.scrollTop=body.scrollHeight; });
 }
-function init(){ seed(); nav(); homeStats(); setupAuth('craft','craft'); setupAuth('money','money'); craftPage(); moneyPage(); logout(); contact(); whatsappLinks(); chat(); }
+function init(){ seed(); nav(); mobileQuickbar(); homeStats(); setupAuth('craft','craft'); setupAuth('money','money'); craftPage(); moneyPage(); logout(); contact(); whatsappLinks(); chat(); }
 document.addEventListener('DOMContentLoaded', init);
